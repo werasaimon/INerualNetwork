@@ -48,12 +48,13 @@ namespace
 }
 
 
+#define learningRate 0.4
 
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
 
-    INerualNetwork *nW = new INerualNetwork(sigmoida,sigmoidasDerivate,{784,200,10});
+    INerualNetwork *NerualNet = new INerualNetwork(sigmoida,sigmoidasDerivate,{784,200,10});
     QStringList wordList;
     bool ok=true;
         QFile f("C:/DATASET/mnist_train.csv");
@@ -73,7 +74,7 @@ int main(int argc, char *argv[])
                 float * tmpIN = inputs_list(wordList);
                 float * tmpTAR = targets_list(str.toInt(&ok));
 
-                nW->backPropagate(tmpIN,tmpTAR,0.2);
+                NerualNet->backPropagate(tmpIN,tmpTAR,learningRate);
 
                 delete tmpIN;
                 delete tmpTAR;
@@ -93,8 +94,8 @@ int main(int argc, char *argv[])
                 qDebug()<<"__________________";
                 qDebug()<<"For number "<<str;
                 float * tmpIN = inputs_list(wordList);
-                float *out_neurons = nW->feedForwarding(tmpIN);
-                for (int i = 0; i < nW->getCountNeuronsOutput(); ++i)
+                float *out_neurons = NerualNet->feedForwarding(tmpIN);
+                for (int i = 0; i < NerualNet->getCountNeuronsOutput(); ++i)
                 {
                     qDebug() << i <<   out_neurons[i];
                 }
@@ -105,8 +106,8 @@ int main(int argc, char *argv[])
 
             f2.close();
         }
-         delete nW;
-        nW = nullptr;
+        delete NerualNet;
+        NerualNet = nullptr;
         qDebug()<<"_______________THE____END_______________";
 
 
