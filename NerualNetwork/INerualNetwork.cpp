@@ -1,5 +1,5 @@
 #include "INerualNetwork.h"
-
+#include <cassert>
 
 INerualNetwork::INerualNetwork(float (*_activation)(float),
                  float (*_derivative)(float),
@@ -7,6 +7,7 @@ INerualNetwork::INerualNetwork(float (*_activation)(float),
     :activation(_activation),
      derivative(_derivative)
 {
+    assert(values.size() > 2);
     //--- "Neyeral Network" this equal "NN"
     //---set layer count for NN,
     //---where input neuerons for first layer equal NN input
