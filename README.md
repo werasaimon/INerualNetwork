@@ -86,3 +86,16 @@ int main(int argc, char *argv[])
     return a.exec();
 }
 ```
+
+
+#Output Console
+...
+
+ ___________________RESULT ABC_____________ 
+neuron: 0  0.015719
+neuron: 1  0.984323
+
+ ___________________RESULT CBA_____________ 
+neuron: 0  0.979305
+neuron: 1  0.0206562
+...
