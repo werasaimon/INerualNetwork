@@ -20,10 +20,12 @@ int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
 
+    //--- activation function
     auto sigmoida = [](float val) -> float {
         return (1.0 / (1.0 + exp(-val)));
-    }
-    ;
+    };
+    
+    //--- activation function derivative
     auto sigmoidasDerivate = [](float val) -> float {
         return (val * (1.0 - val));
     };
