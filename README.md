@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
 
 #Output Console
 ...
-
+```
  ___________________RESULT ABC_____________ 
 neuron: 0  0.015719
 neuron: 1  0.984323
