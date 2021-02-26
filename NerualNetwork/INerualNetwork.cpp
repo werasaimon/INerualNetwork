@@ -1,13 +1,40 @@
 #include "INerualNetwork.h"
-#include <cassert>
+
+#include "INerualNetwork.h"
+#include <stdlib.h>
+#include <iostream>
+#include <assert.h>
+
+INerualNetwork::INerualNetwork(const INerualNetwork &n_copy) :
+    activation(n_copy.activation),
+    derivative(n_copy.derivative),
+    m_nInputNeurons(n_copy.m_nInputNeurons),
+    m_nOutputNeurons(n_copy.m_nOutputNeurons),
+    m_nlCountLayers(n_copy.m_nlCountLayers)
+
+{
+    m_nLayers.resize(m_nlCountLayers);
+    for (unsigned int i = 0; i < n_copy.m_nLayers.size(); ++i)
+    {
+        m_nLayers[i] = new ILayerNeurons(n_copy.m_nLayers[i]->getInCount(),n_copy.m_nLayers[i]->getOutCount());
+        m_nLayers[i]->getErrors()[i] =  n_copy.m_nLayers[i]->getErrors()[i];
+        m_nLayers[i]->getHidden()[i] =  n_copy.m_nLayers[i]->getHidden()[i];
+        for(unsigned int inp =0; inp < n_copy.m_nLayers[i]->getInCount()+1; inp++)
+        {
+            for(unsigned int outp =0; outp < n_copy.m_nLayers[i]->getOutCount(); outp++)
+            {
+                m_nLayers[i]->getMatrix(inp,outp) = n_copy.m_nLayers[i]->getMatrix(inp,outp);
+            }
+        }
+    }
+}
 
 INerualNetwork::INerualNetwork(float (*_activation)(float),
-                 float (*_derivative)(float),
-                 std::initializer_list<unsigned int> &&values)
+                               float (*_derivative)(float),
+                               std::initializer_list<unsigned int> &&values )
     :activation(_activation),
      derivative(_derivative)
 {
-    assert(values.size() > 2);
     //--- "Neyeral Network" this equal "NN"
     //---set layer count for NN,
     //---where input neuerons for first layer equal NN input
@@ -15,19 +42,20 @@ INerualNetwork::INerualNetwork(float (*_activation)(float),
     m_nlCountLayers = values.size()-1;
     m_nLayers = vector<ILayerNeurons*>(m_nlCountLayers);
 
+
     int i = 0;
     for (auto it = values.begin()+1; i < m_nlCountLayers; ++i, ++it)
     {
         int OutSize = *it;
-        if(i < m_nlCountLayers)
-        {
-            int InSize = *(it-1);
-            if(i==0) m_nInputNeurons = InSize;
-            else if(i==m_nlCountLayers-1)  m_nOutputNeurons = OutSize;
-            m_nLayers[i] = new ILayerNeurons(InSize,OutSize);
-        }
-   }
+        int InSize  = *(it-1);
+        if(i==0) m_nInputNeurons = InSize;
+        else if(i==m_nlCountLayers-1)  m_nOutputNeurons = OutSize;
+        m_nLayers[i] = new ILayerNeurons(InSize,OutSize);
+       // m_nLayers[i]->InitRandomWeight();
+    }
+
 }
+
 
 INerualNetwork::~INerualNetwork()
 {
@@ -37,17 +65,24 @@ INerualNetwork::~INerualNetwork()
     }
 }
 
+void INerualNetwork::InitRandom()
+{
+    for (unsigned int i = 0; i < m_nLayers.size(); ++i)
+    {
+        m_nLayers[i]->InitRandomWeight();
+    }
+}
+
 
 float* INerualNetwork::feedForwarding(const float* _inputes)
 {
     for (int i = 0; i<m_nlCountLayers; i++)
     {
         auto &Layer = m_nLayers[i];
-
-        for(int hid =0; hid < Layer->getOutCount(); hid++)
+        for(unsigned int hid =0; hid < Layer->getOutCount(); hid++)
         {
             float tmpS = 0.0;
-            for(int inp =0; inp < Layer->getInCount(); inp++)
+            for(unsigned int inp =0; inp < Layer->getInCount(); inp++)
             {
                 if(i == 0)
                 {
@@ -75,7 +110,7 @@ void INerualNetwork::backPropagate(const float *_inputes, const float *_targetes
     feedForwarding(_inputes);
 
     //--- calculate errors for last layer
-    for(int i =0; i < m_nLayers[m_nlCountLayers-1]->getOutCount(); i++)
+    for(unsigned int i =0; i < m_nLayers[m_nlCountLayers-1]->getOutCount(); i++)
     {
         auto &Layer = m_nLayers[m_nlCountLayers-1];
         Layer->getErrors()[i] = (_targetes[i] - Layer->getHidden()[i]) * derivative(Layer->getHidden()[i]);
@@ -87,10 +122,10 @@ void INerualNetwork::backPropagate(const float *_inputes, const float *_targetes
     {
         auto &Layer_prev = m_nLayers[i];
         auto &Layer = m_nLayers[i+1];
-        for(int hid =0; hid < Layer->getInCount(); hid++)
+        for(unsigned int hid =0; hid < Layer->getInCount(); hid++)
         {
             Layer_prev->getErrors()[hid] = 0.0;
-            for(int ou =0; ou < Layer->getOutCount(); ou++)
+            for(unsigned int ou =0; ou < Layer->getOutCount(); ou++)
             {
                 Layer_prev->getErrors()[hid] += Layer->getErrors()[ou] * Layer->getMatrix(hid,ou);
             }
@@ -103,9 +138,9 @@ void INerualNetwork::backPropagate(const float *_inputes, const float *_targetes
     for (int i = m_nlCountLayers-1; i>=0; i--)
     {
         auto &Layer = m_nLayers[i];
-        for(int ou =0; ou < Layer->getOutCount(); ou++)
+        for(unsigned int ou =0; ou < Layer->getOutCount(); ou++)
         {
-            for(int hid =0; hid < Layer->getInCount(); hid++)
+            for(unsigned int hid =0; hid < Layer->getInCount(); hid++)
             {
                 if(i==0)
                 {
@@ -121,6 +156,31 @@ void INerualNetwork::backPropagate(const float *_inputes, const float *_targetes
                 }
             }
             Layer->getMatrix(Layer->getInCount(),ou) += (learningRate * Layer->getErrors()[ou]);
+        }
+    }
+}
+
+
+void INerualNetwork::CopyWeightAndErrorBias(const INerualNetwork &other)
+{
+    assert(activation);
+    assert(derivative);
+    assert(m_nInputNeurons == other.m_nInputNeurons);
+    assert(m_nOutputNeurons == other.m_nOutputNeurons);
+    assert(m_nlCountLayers == other.m_nlCountLayers);
+
+    for (unsigned int i = 0; i < other.m_nLayers.size(); ++i)
+    {
+        assert( m_nLayers[i]->getInCount() == other.m_nLayers[i]->getInCount());
+        assert( m_nLayers[i]->getOutCount() == other.m_nLayers[i]->getOutCount());
+        m_nLayers[i]->getErrors()[i] =  other.m_nLayers[i]->getErrors()[i];
+       /**/ m_nLayers[i]->getHidden()[i] =  other.m_nLayers[i]->getHidden()[i]; /**/
+        for(unsigned int inp =0; inp < other.m_nLayers[i]->getInCount()+1; inp++)
+        {
+            for(unsigned int outp =0; outp < other.m_nLayers[i]->getOutCount(); outp++)
+            {
+                m_nLayers[i]->getMatrix(inp,outp) = other.m_nLayers[i]->getMatrix(inp,outp);
+            }
         }
     }
 }

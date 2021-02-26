@@ -4,65 +4,11 @@
 
 #include <math.h>
 #include <vector>
-#include <time.h>
+
+#include "ILayerNeurons.hpp"
+
 using namespace std;
 
-
-class ILayerNeurons
-{
-
-private:
-
-        //--- information about input/out width for neuro layer
-       int inSize;
-       int outSize;
-       //--- weight matrix
-       float* matrixWeight;
-       //--- current hidden value array
-       float* hiddenNeurons;
-       //--- current errors for backPropagate
-       float* errorsBias;
-public:
-
-       ILayerNeurons(){}
-       ILayerNeurons(int in_count , int out_count )
-        :inSize(in_count),
-         outSize(out_count)
-       {
-           srand((unsigned)time(NULL));
-           //--- initialization values and allocating memory
-           errorsBias = new float[outSize];
-           hiddenNeurons = new float[outSize];
-           matrixWeight = new float[(inSize+1) * outSize];
-           for(int inp =0; inp < inSize+1; inp++)
-           {
-               for(int outp =0; outp < outSize; outp++)
-               {
-                   getMatrix(inp,outp) =  (((float)rand() / (float)RAND_MAX) - 0.5) * pow(outSize,-0.5);
-               }
-           }
-       }
-
-       ~ILayerNeurons()
-       {
-           inSize=0;
-           outSize=0;
-           if(errorsBias) delete[] errorsBias;
-           if(hiddenNeurons) delete[] hiddenNeurons;
-           if(matrixWeight) delete[] matrixWeight;
-       }
-
-
-       int getInCount(){return inSize;}
-       int getOutCount(){return outSize;}
-       float *getMatrix(){return matrixWeight;}
-       float* getHidden(){ return hiddenNeurons;}
-       float* getErrors() { return errorsBias;}
-       float &getMatrix(int i , int j)
-       {
-           return matrixWeight[i*outSize + j];
-       }
-};
 
 class INerualNetwork
 {
@@ -70,23 +16,54 @@ class INerualNetwork
     float (*activation)(float);
     float (*derivative)(float);
 
-
 public:
 
+    /**
+     * Deffault-Constructor
+     * @param n_copy
+     */
+    INerualNetwork(){}
+
+    /**
+     * Copy-Constructor
+     * @param n_copy
+     */
+    INerualNetwork(const INerualNetwork& n_copy);
+
+    /**
+     * Initilization-Constructor
+     * @param n_copy
+     */
     INerualNetwork(float (*_activation)(float),
                    float (*_derivative)(float),
-                  std::initializer_list<unsigned int>&& values);
+                   std::initializer_list<unsigned int>&& values);
 
    // myNeuro();
     ~INerualNetwork();
 
 
+    void InitRandom();
+
+
     float *feedForwarding(const float *_input);
     void backPropagate(const float *_inputes, const float *targetes,const float& learningRate);
 
-    int getCountNeuronsOutput() const { return m_nOutputNeurons; }
-    int getCountNeuronsInput() const { return m_nInputNeurons; }
-    int getCountLayers() const { return m_nlCountLayers; }
+
+    unsigned int getCountNeuronsOutput() const { return m_nOutputNeurons; }
+    unsigned int getCountNeuronsInput() const { return m_nInputNeurons; }
+    unsigned int getCountLayers() const { return m_nlCountLayers; }
+
+    ILayerNeurons* getLayer(int indx) const
+    {
+        return m_nLayers[indx];
+    }
+
+    ILayerNeurons* getLayer(int indx)
+    {
+       return m_nLayers[indx];
+    }
+
+    void CopyWeightAndErrorBias(const INerualNetwork& other);
 
 private:
     std::vector<ILayerNeurons*> m_nLayers;
