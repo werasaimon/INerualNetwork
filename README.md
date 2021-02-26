@@ -1,62 +1,101 @@
-# CMath
+# INerualNetwork
+NerualNetwork Nerual  Network Neuron
+
+simple neuero network with C/C++ and QT Code
 
 
+![DATASET MNIST] https://www.kaggle.com/oddrationale/mnist-in-csv
+
+```cpp
+#include <QCoreApplication>
+#include <QTime>
+#include <iostream>
+
+#include "NerualNetwork/INerualNetwork.h"
 
 
-CMath is set of C++ classes for Vector and Matrix algebra used in computer graphics and relativity physics . The library consits of these classes:
+#define learningRate 0.4
+
+int main(int argc, char *argv[])
+{
+    QCoreApplication a(argc, argv);
+
+    auto sigmoida = [](float val) -> float {
+        return (1.0 / (1.0 + exp(-val)));
+    }
+    ;
+    auto sigmoidasDerivate = [](float val) -> float {
+        return (val * (1.0 - val));
+    };
+
+    INerualNetwork *NerualNet = new INerualNetwork(sigmoida,sigmoidasDerivate,{100,20,6,3,2});
 
 
-    
-    Complex - two dimensional complex number for 2D 
-    Vector2 - two dimensional vector for 2D vertices and texture coordinates
-    Vector3 - three dimensional vector for 3D vertices, normals and texture coordinates and also for color
-    Vector4 - four dimensional vector for 3D vertices and 4D vecrtices, normals, texture coordinates and color with alpha channell.
-    LoretzVector - four dimensional vector for 4D relativity physics 
-    Matrix3 - matrix 3x3 for rotation (used in ODE)
-    Matrix4 - matrix 4x4 for general geometrix transformations
-    Quaternion - quaternion re 3x im 1x, for rotation_3D
-    Octonion - Octonion re 7x im 1x, for rotation_6D
-   
-    
-    
-Note that this library is set of C++ class that has all(!) method inlined. (for performance reasons)
+    //----------------------------------INPUTS----GENERATOR-------------
+    qsrand((QTime::currentTime().second()));
+    float *abc = new float[100];
+    for(int i=0; i<100;i++)
+    {
+        abc[i] =(qrand()%98)*0.01+0.01;
+    }
+
+    float *cba = new float[100];
+    for(int i=0; i<100;i++)
+    {
+        cba[i] =(qrand()%98)*0.01+0.01;
+    }
 
 
-Features
+    //---------------------------------TARGETS----GENERATOR-------------
+    float *target1 = new float[2];
+    target1[0] =0.01;
+    target1[1] =0.99;
+    float *target2 = new float[2];
+    target2[0] =0.99;
+    target2[1] =0.01;
 
-    basic aritemetic operations - using operators
-    basic linear algebra operations - such as transpose, dot product, etc.
-    aliasis for vertex coordinates - it means:
-    Vector3f v;
-    // use vertex coordinates
-    v.x = 1; v.y = 2; v.z = -1;
-    // use texture coordinates
-    v.s = 0; v.t = 1; v.u = 0.5;
-    // use color coordinates
-    v.r = 1; v.g = 0.5; v.b = 0;
-    conversion constructor and assign operators - so you can assign a value of rpVector3D<T1> type to a variable of rpVector3D<T2> type for any convertable T1, T2 type pairs. In other words, you can do this:
-    Vector3f f3; Vector3d d3 = f3;
-    ...
-    f3 = d3;
 
-    
-Status
+    //--------------------------------NN---------WORKING---------------
+    int i=0;
+    while(i<10000)
+    {
+        NerualNet->backPropagate(abc,target1,learningRate);
+        NerualNet->backPropagate(cba,target2,learningRate);
+        i++;
+    }
 
-    Classes rpVector2D<T>, rpVector3D<T>, rpVector4D<T> are supposed to be stable. I have been using these libraries for two or three years.
-    Classes rpMatrix3x3<T>, rpMatrix4x4<T> were tested for barely all operations and seems to be everything OK.
-    Class rpQuaternion<T> was tested for barely all operations and seems to be good.
 
-    
-Tricks
+    std::cout<<"\n ___________________RESULT ABC_____________ \n";
+    float *output_neuron = NerualNet->feedForwarding(abc);
+    for (int i = 0; i < NerualNet->getCountNeuronsOutput(); ++i)
+    {
+       std::cout << "neuron: " << i << "  " << output_neuron[i] << std::endl;
+    }
 
-You can pass vector or matrix class directly as argument appropriate OpenGL function,
 
-	Vector2f t;
-	Vector3f n,v;
-	Matrix4f transform;
-	
-	glMultiMatrixf(transform);
-	
-	glTexCoord2fv(t);
-	glNormal3fv(n);
-	glVertex3fv(v);
+    std::cout<<"\n ___________________RESULT CBA_____________ \n";
+    float *output_neuron2 = NerualNet->feedForwarding(cba);
+    for (int i = 0; i < NerualNet->getCountNeuronsOutput(); ++i)
+    {
+       std::cout << "neuron: " << i << "  " << output_neuron2[i] << std::endl;
+    }
+
+    delete NerualNet;
+    NerualNet = nullptr;
+
+    return a.exec();
+}
+```
+
+
+#Output Console
+...
+```
+ ___________________RESULT ABC_____________ 
+neuron: 0  0.015719
+neuron: 1  0.984323
+
+ ___________________RESULT CBA_____________ 
+neuron: 0  0.979305
+neuron: 1  0.0206562
+...
