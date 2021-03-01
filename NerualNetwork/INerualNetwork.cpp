@@ -1,13 +1,10 @@
-#include "INerualNetwork.h"
-#include "INerualNetwork.h"
 
 #include "INerualNetwork.h"
 #include <stdlib.h>
-#include <iostream>
 #include <assert.h>
-
 #include <fstream>
 #include <sstream>
+
 
 INerualNetwork::INerualNetwork(const INerualNetwork &n_copy) :
     m_nInputNeurons(n_copy.m_nInputNeurons),

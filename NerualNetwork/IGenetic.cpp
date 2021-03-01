@@ -60,7 +60,7 @@ INerualNetwork* IGenetic::Croosover(const INerualNetwork *a, const INerualNetwor
             if( mutation(rng) < mutation_rate )
             {
                 // do mutation
-                  cross->getLayer(i)->getErrors()[m] = (unif(rng) - 0.5) * 3.0 + (unif(rng) - 0.5);
+                  cross->getLayer(i)->getErrors()[m] = (unif(rng) - 0.5);// * 3.0 + (unif(rng) - 0.5);
             }
             else
             {
