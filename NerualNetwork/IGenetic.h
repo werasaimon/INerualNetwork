@@ -6,11 +6,9 @@
 class IGenetic
 {
 public:
-    IGenetic();
 
-
-    static INerualNetwork* Croosover(const INerualNetwork* a , const INerualNetwork* b , float mutation_rate);
-
+    static INerualNetwork* Croosover(const INerualNetwork* a , const INerualNetwork* b , float mutation_rate = 0);
+    static void Mutatation(INerualNetwork* a, float MutationChance, float MutationStrength);
 
 };
 

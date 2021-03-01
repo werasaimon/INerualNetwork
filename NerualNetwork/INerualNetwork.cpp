@@ -1,16 +1,19 @@
 #include "INerualNetwork.h"
+#include "INerualNetwork.h"
 
 #include "INerualNetwork.h"
 #include <stdlib.h>
 #include <iostream>
 #include <assert.h>
 
+#include <fstream>
+#include <sstream>
+
 INerualNetwork::INerualNetwork(const INerualNetwork &n_copy) :
-    activation(n_copy.activation),
-    derivative(n_copy.derivative),
     m_nInputNeurons(n_copy.m_nInputNeurons),
     m_nOutputNeurons(n_copy.m_nOutputNeurons),
-    m_nlCountLayers(n_copy.m_nlCountLayers)
+    m_nlCountLayers(n_copy.m_nlCountLayers),
+    m_NetworkStructure(n_copy.m_NetworkStructure)
 
 {
     m_nLayers.resize(m_nlCountLayers);
@@ -29,18 +32,15 @@ INerualNetwork::INerualNetwork(const INerualNetwork &n_copy) :
     }
 }
 
-INerualNetwork::INerualNetwork(float (*_activation)(float),
-                               float (*_derivative)(float),
-                               std::initializer_list<unsigned int> &&values )
-    :activation(_activation),
-     derivative(_derivative)
+INerualNetwork::INerualNetwork(std::initializer_list<unsigned int> &&values )
 {
     //--- "Neyeral Network" this equal "NN"
     //---set layer count for NN,
     //---where input neuerons for first layer equal NN input
     //---and output neuerons for last layer equal NN output
     m_nlCountLayers = values.size()-1;
-    m_nLayers = vector<ILayerNeurons*>(m_nlCountLayers);
+    m_nLayers = std::vector<ILayerNeurons*>(m_nlCountLayers);
+    m_NetworkStructure.resize(values.size());
 
 
     int i = 0;
@@ -51,9 +51,33 @@ INerualNetwork::INerualNetwork(float (*_activation)(float),
         if(i==0) m_nInputNeurons = InSize;
         else if(i==m_nlCountLayers-1)  m_nOutputNeurons = OutSize;
         m_nLayers[i] = new ILayerNeurons(InSize,OutSize);
+        m_NetworkStructure[i] = InSize;
        // m_nLayers[i]->InitRandomWeight();
     }
 
+    m_NetworkStructure[m_nlCountLayers] = m_nOutputNeurons;
+}
+
+INerualNetwork::INerualNetwork(std::vector<unsigned int> NetworkStructure)
+    : m_NetworkStructure(NetworkStructure)
+{
+    //--- "Neyeral Network" this equal "NN"
+    //---set layer count for NN,
+    //---where input neuerons for first layer equal NN input
+    //---and output neuerons for last layer equal NN output
+    m_nlCountLayers = NetworkStructure.size()-1;
+    m_nLayers = std::vector<ILayerNeurons*>(m_nlCountLayers);
+
+    int i = 0;
+    for (auto it = NetworkStructure.begin()+1; i < m_nlCountLayers; ++i, ++it)
+    {
+        int OutSize = *it;
+        int InSize  = *(it-1);
+        if(i==0) m_nInputNeurons = InSize;
+        else if(i==m_nlCountLayers-1)  m_nOutputNeurons = OutSize;
+        m_nLayers[i] = new ILayerNeurons(InSize,OutSize);
+       // m_nLayers[i]->InitRandomWeight();
+    }
 }
 
 
@@ -96,7 +120,7 @@ float* INerualNetwork::feedForwarding(const float* _inputes)
                 }
             }
             tmpS += Layer->getMatrix(Layer->getInCount(),hid);
-            Layer->getHidden()[hid] = activation(tmpS);
+            Layer->getHidden()[hid] = activation(tmpS,Layer->getLayer_type());
         }
     }
 
@@ -163,8 +187,6 @@ void INerualNetwork::backPropagate(const float *_inputes, const float *_targetes
 
 void INerualNetwork::CopyWeightAndErrorBias(const INerualNetwork &other)
 {
-    assert(activation);
-    assert(derivative);
     assert(m_nInputNeurons == other.m_nInputNeurons);
     assert(m_nOutputNeurons == other.m_nOutputNeurons);
     assert(m_nlCountLayers == other.m_nlCountLayers);
@@ -174,7 +196,7 @@ void INerualNetwork::CopyWeightAndErrorBias(const INerualNetwork &other)
         assert( m_nLayers[i]->getInCount() == other.m_nLayers[i]->getInCount());
         assert( m_nLayers[i]->getOutCount() == other.m_nLayers[i]->getOutCount());
         m_nLayers[i]->getErrors()[i] =  other.m_nLayers[i]->getErrors()[i];
-       /**/ m_nLayers[i]->getHidden()[i] =  other.m_nLayers[i]->getHidden()[i]; /**/
+       /** m_nLayers[i]->getHidden()[i] =  other.m_nLayers[i]->getHidden()[i]; /**/
         for(unsigned int inp =0; inp < other.m_nLayers[i]->getInCount()+1; inp++)
         {
             for(unsigned int outp =0; outp < other.m_nLayers[i]->getOutCount(); outp++)
@@ -184,3 +206,79 @@ void INerualNetwork::CopyWeightAndErrorBias(const INerualNetwork &other)
         }
     }
 }
+
+std::string INerualNetwork::serialize() const
+{
+    std::string retBuf;
+    unsigned int nbrOfTopoElements = m_NetworkStructure.size() + 1;
+    unsigned int* topoBuf = new unsigned int[ nbrOfTopoElements ];
+    topoBuf[0] = m_NetworkStructure.size();//getCountLayers();
+    for( unsigned int i = 0; i < m_NetworkStructure.size(); i++ )
+    {
+        topoBuf[i+1] = m_NetworkStructure.at(i);
+    }
+
+    retBuf.append( std::string( (char*)topoBuf, nbrOfTopoElements*sizeof(unsigned int) ) );
+    for( auto l : m_nLayers )
+    {
+        std::string lBuf = l->serialize();
+        unsigned int lBufSize = lBuf.size();
+        retBuf.append( std::string( (char*)(&lBufSize), 1*sizeof(unsigned int) ) );
+        retBuf.append(lBuf);
+    }
+    delete [] topoBuf;
+    return retBuf;
+}
+
+
+INerualNetwork *INerualNetwork::deserialize(const std::string &buffer)
+{
+    const char* buff = buffer.c_str();
+    unsigned int nbrOfLayers = ((unsigned int*)buff)[0];
+    std::vector<unsigned int> networkStructure;
+    for( unsigned int i = 0; i < nbrOfLayers; i++ )
+    {
+        networkStructure.push_back( ((unsigned int*)buff)[i+1] );
+    }
+
+    INerualNetwork* network = new INerualNetwork( networkStructure );
+    unsigned int offset = (nbrOfLayers+1) * sizeof(unsigned int);
+    for( unsigned int i = 0; i < nbrOfLayers-1; i++ )
+    {
+        const char* layerBuf = buff + offset;
+        unsigned int sizeOfThisLayer = ((unsigned int*)layerBuf)[0];
+        std::string layerData( layerBuf + sizeof(unsigned int), sizeOfThisLayer );
+        ILayerNeurons* l = ILayerNeurons::deserialize( layerData );
+        network->m_nLayers[i] = l;
+        offset = offset + sizeOfThisLayer + sizeof(unsigned int);
+    }
+    return network;
+}
+
+bool INerualNetwork::save(const std::string &filePath)
+{
+    std::ofstream netFile;
+    netFile.open( filePath ,std::ios::binary);
+    if( !netFile.is_open() )
+        return false;
+
+    netFile << serialize();
+    netFile.close();
+    return true;
+}
+
+INerualNetwork *INerualNetwork::load(const std::string &filePath)
+{
+    std::ifstream netFile( filePath , std::ios::binary);
+    if( ! netFile.is_open() )
+        return NULL;
+
+    // read the whole file
+    std::string netAllBuffer((std::istreambuf_iterator<char>(netFile)),
+                              std::istreambuf_iterator<char>());
+    netFile.close();
+
+    return INerualNetwork::deserialize( netAllBuffer );
+}
+
+
