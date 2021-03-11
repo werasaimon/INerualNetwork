@@ -2,9 +2,10 @@
 NerualNetwork Nerual  Network Neuron
 
 simple neuero network with C/C++ and QT Code
-
-
 ![DATASET MNIST] https://www.kaggle.com/oddrationale/mnist-in-csv
+
+
+![P] (https://github.com/werasaimon/INerualNetwork/blob/paint_st/image/eight.jpg)
 
 ```cpp
 #include "paint.h"
