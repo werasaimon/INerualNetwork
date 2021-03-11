@@ -5,6 +5,11 @@ simple neuero network with C/C++ and QT Code
 ![DATASET MNIST] https://www.kaggle.com/oddrationale/mnist-in-csv
 
 
+#Output Programms
+...
+```
+ ___________________RESULT____________________________
+...
 
 ![alt text](https://github.com/werasaimon/INerualNetwork/blob/paint_st/image/eight.jpg?raw=true)
 
@@ -389,8 +394,4 @@ void paint::on_actionload_triggered()
 ```
 
 
-#Output Programms
-...
-```
- ___________________RESULT____________________________
-...
+
