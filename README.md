@@ -2,10 +2,11 @@
 NerualNetwork Nerual  Network Neuron
 
 simple neuero network with C/C++ and QT Code
-![DATASET MNIST] https://www.kaggle.com/oddrationale/mnist-in-csv
 
 #links to used resources
 Qt Plot : https://www.qcustomplot.com/
+![DATASET MNIST] https://www.kaggle.com/oddrationale/mnist-in-csv
+
 
 #Output Programms
 ...
