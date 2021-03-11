@@ -56,6 +56,8 @@ paint::paint(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    this->setWindowTitle("Neural Network St.Paint");
+    this->setFixedSize(1000,750);
     //===============================================================//
 
     ui->customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes |
@@ -387,6 +389,7 @@ void paint::on_actionload_triggered()
     }
     NeuralNet = NeuralNet->load(filename.toStdString());
 }
+
 
 ```
 
