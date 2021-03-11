@@ -7,10 +7,7 @@ simple neuero network with C/C++ and QT Code
 
 #Output Programms
 ...
-```
  ___________________RESULT____________________________
-...
-
 ![alt text](https://github.com/werasaimon/INerualNetwork/blob/paint_st/image/eight.jpg?raw=true)
 
 ```cpp
