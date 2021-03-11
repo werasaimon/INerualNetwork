@@ -5,7 +5,8 @@ simple neuero network with C/C++ and QT Code
 ![DATASET MNIST] https://www.kaggle.com/oddrationale/mnist-in-csv
 
 
-![P]{ https://github.com/werasaimon/INerualNetwork/blob/paint_st/image/eight.jpg }
+
+![alt text](https://github.com/werasaimon/INerualNetwork/blob/paint_st/image/eight.jpg?raw=true)
 
 ```cpp
 #include "paint.h"
