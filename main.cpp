@@ -1,32 +1,28 @@
-#include <QCoreApplication>
-#include <QDebug>
-#include <QTime>
-#include <QDebug>
-#include <QFile>
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <iostream>
 #include "NerualNetwork/INerualNetwork.h"
 
 
 int main(int argc, char *argv[])
 {
-    QCoreApplication a(argc, argv);
-
     INerualNetwork *NerualNet = new INerualNetwork({100,20,2});
     {
 
         //----------------------------------INPUTS----GENERATOR-------------
         // /! создаём 2 случайнозаполненных входных вектора
-        qsrand((QTime::currentTime().second()));
+        srand( time( NULL ));
         float *abc = new float[100];
         for(int i=0; i<100;i++)
         {
-            abc[i] =(qrand()%98)*0.01+0.01;
+            abc[i] =(rand()%98)*0.01+0.01;
         }
 
         float *cba = new float[100];
         for(int i=0; i<100;i++)
         {
-            cba[i] =(qrand()%98)*0.01+0.01;
+            cba[i] =(rand()%98)*0.01+0.01;
         }
 
         //---------------------------------TARGETS----GENERATOR-------------
@@ -41,7 +37,7 @@ int main(int argc, char *argv[])
         //--------------------------------NN---------WORKING---------------
         // первичный опрос сети
 
-        std::cout << "___________________ABC_____________ \n";
+        std::cout << "___________________ input: ABC _____________ \n";
 
         float *out = nullptr;
         out = NerualNet->feedForwarding(abc);
@@ -50,7 +46,7 @@ int main(int argc, char *argv[])
             std::cout << "out neuron " << i << " = " << out[i] << std::endl;
         }
 
-        std::cout << "___________________CBA_____________ \n";
+        std::cout << "___________________ input: CBA _____________ \n";
 
         out = NerualNet->feedForwarding(cba);
         for (unsigned int i=0; i<NerualNet->getCountNeuronsOutput(); ++i)
@@ -58,7 +54,7 @@ int main(int argc, char *argv[])
             std::cout << "out neuron " << i << " = " << out[i] << std::endl;
         }
 
-        std::cout << "\n \n ___________________Train_____________ \n";
+        std::cout << "\n \n ___________________ Train _____________ \n";
         float lerning_rate = 0.2;
         // обучение
         int i=0;
@@ -71,7 +67,7 @@ int main(int argc, char *argv[])
         }
 
         //просмотр результатов обучения (опрос сети второй раз)
-        std::cout << "\n \n ___________________ABC_____________ \n";
+        std::cout << "\n \n ___________________ input: ABC _____________ \n";
 
         out = nullptr;
         out = NerualNet->feedForwarding(abc);
@@ -80,7 +76,7 @@ int main(int argc, char *argv[])
             std::cout << "out neuron " << i << " = " << out[i] << std::endl;
         }
 
-        std::cout << "___________________CBA_____________ \n";
+        std::cout << "___________________ input: CBA _____________ \n";
 
         out = NerualNet->feedForwarding(cba);
         for (unsigned int i=0; i<NerualNet->getCountNeuronsOutput(); ++i)
@@ -89,5 +85,5 @@ int main(int argc, char *argv[])
         }
     }
 
-    return a.exec();
+    return 0;
 }
