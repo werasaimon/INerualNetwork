@@ -6,110 +6,88 @@
 
 #include "NerualNetwork/INerualNetwork.h"
 
-namespace
-{
-    float sigmoida(float val)
-    {
-        //--- activation function
-       return (1.0 / (1.0 + exp(-val)));
-    }
-    float sigmoidasDerivate(float val)
-    {
-        //--- activation function derivative
-         return (val * (1.0 - val));
-    };
-
-    float* inputs_list(const QStringList &strList)
-    {
-        float* inputs = (float*) malloc((784)*sizeof(float));
-        QString str;
-        bool ok=true;
-        for (int i = 1; i<strList.size();i++)
-        {
-            str = strList.at(i);
-            inputs[i-1]= ( (str.toFloat(&ok) / 255.0 *0.99)+0.01);
-        }
-        return inputs;
-    }
-
-    float* targets_list(const int &j)
-    {
-         float* targets = (float*) malloc((10)*sizeof(float));
-        for (int i = 0; i<10;i++)
-        {
-            if(i==j)
-            targets[i]=(0.99);
-            else
-            targets[i]=(0.01);
-        }
-
-        return targets;
-    }
-}
-
-
-#define learningRate 0.4
 
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
 
-    INerualNetwork *NerualNet = new INerualNetwork(sigmoida,sigmoidasDerivate,{784,200,10});
-    QStringList wordList;
-    bool ok=true;
-        QFile f("C:/DATASET/mnist_train.csv");
-        if (f.open(QIODevice::ReadOnly))
+    INerualNetwork *NerualNet = new INerualNetwork({100,20,2});
+    {
+
+        //----------------------------------INPUTS----GENERATOR-------------
+        // /! создаём 2 случайнозаполненных входных вектора
+        qsrand((QTime::currentTime().second()));
+        float *abc = new float[100];
+        for(int i=0; i<100;i++)
         {
-            int qq=0;
-//            while(!f.atEnd())
-           while(qq<3000)
-            {
-                qq++;
-                if(qq%100==0)
-                    qDebug()<<qq;
-                QString data;
-                data = f.readLine();
-                wordList = data.split(',');
-                QString str = wordList.at(0);
-                float * tmpIN = inputs_list(wordList);
-                float * tmpTAR = targets_list(str.toInt(&ok));
-
-                NerualNet->backPropagate(tmpIN,tmpTAR,learningRate);
-
-                delete tmpIN;
-                delete tmpTAR;
-            }
-
-            f.close();
+            abc[i] =(qrand()%98)*0.01+0.01;
         }
-        QFile f2("C:/DATASET/mnist_test.csv");
-        if (f2.open(QIODevice::ReadOnly))
+
+        float *cba = new float[100];
+        for(int i=0; i<100;i++)
         {
-            while(!f2.atEnd())
-            {
-                QString data;
-                data = f2.readLine();
-                wordList = data.split(',');
-                QString str = wordList.at(0);
-                qDebug()<<"__________________";
-                qDebug()<<"For number "<<str;
-                float * tmpIN = inputs_list(wordList);
-                float *out_neurons = NerualNet->feedForwarding(tmpIN);
-                for (int i = 0; i < NerualNet->getCountNeuronsOutput(); ++i)
-                {
-                    qDebug() << i <<   out_neurons[i];
-                }
-                qDebug()<<"__________________";
-                delete tmpIN;
-                tmpIN = nullptr;
-            }
-
-            f2.close();
+            cba[i] =(qrand()%98)*0.01+0.01;
         }
-        delete NerualNet;
-        NerualNet = nullptr;
-        qDebug()<<"_______________THE____END_______________";
 
+        //---------------------------------TARGETS----GENERATOR-------------
+        // создаем 2 цели обучения
+        float *tar1 = new float[2];
+        tar1[0] =0.01;
+        tar1[1] =0.99;
+        float *tar2 = new float[2];
+        tar2[0] =0.99;
+        tar2[1] =0.01;
+
+        //--------------------------------NN---------WORKING---------------
+        // первичный опрос сети
+
+        std::cout << "___________________ABC_____________ \n";
+
+        float *out = nullptr;
+        out = NerualNet->feedForwarding(abc);
+        for (unsigned int i=0; i<NerualNet->getCountNeuronsOutput(); ++i)
+        {
+            std::cout << "out neuron " << i << " = " << out[i] << std::endl;
+        }
+
+        std::cout << "___________________CBA_____________ \n";
+
+        out = NerualNet->feedForwarding(cba);
+        for (unsigned int i=0; i<NerualNet->getCountNeuronsOutput(); ++i)
+        {
+            std::cout << "out neuron " << i << " = " << out[i] << std::endl;
+        }
+
+        std::cout << "\n \n ___________________Train_____________ \n";
+        float lerning_rate = 0.2;
+        // обучение
+        int i=0;
+        while(i<100000)
+        {
+            NerualNet->backPropagate(abc,tar1,lerning_rate);
+            NerualNet->backPropagate(cba,tar2,lerning_rate);
+            i++;
+            if(i%1000 == 0) std::cout << " . ";
+        }
+
+        //просмотр результатов обучения (опрос сети второй раз)
+        std::cout << "\n \n ___________________ABC_____________ \n";
+
+        out = nullptr;
+        out = NerualNet->feedForwarding(abc);
+        for (unsigned int i=0; i<NerualNet->getCountNeuronsOutput(); ++i)
+        {
+            std::cout << "out neuron " << i << " = " << out[i] << std::endl;
+        }
+
+        std::cout << "___________________CBA_____________ \n";
+
+        out = NerualNet->feedForwarding(cba);
+        for (unsigned int i=0; i<NerualNet->getCountNeuronsOutput(); ++i)
+        {
+            std::cout << "out neuron " << i << " = " << out[i] << std::endl;
+        }
+    }
 
     return a.exec();
 }
